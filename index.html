@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DentAI — разборка щётки</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F7FAFB; --ink:#1F2E33; --ink-2:#3D5459; --muted:#7A8D93;
+    --ice:#BBCDD6; --line:#D9E4E9; --mint:#4ECFAF; --mint-ink:#1E8F74; --amber:#F2A65A;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Onest,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+
+  /* ================= block 1: hero ================= */
+  .scene{height:300vh;position:relative}
+  .sticky{position:sticky;top:0;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .hero{flex:none;text-align:center;padding:clamp(48px,9vh,96px) 20px 0;will-change:opacity,transform}
+  .hero h1{margin:0 auto;font-weight:600;font-size:clamp(30px,4.2vw,60px);line-height:1.05;letter-spacing:-.025em}
+  .hero p{margin:18px auto 0;white-space:nowrap;font-size:clamp(16px,1.3vw,19px);line-height:1.45;color:var(--ink-2)}
+  .cta{margin-top:26px;display:inline-flex;align-items:center;gap:10px;border:0;cursor:pointer;font:inherit;font-weight:500;font-size:16px;color:#fff;background:var(--ink-2);padding:15px 26px;border-radius:999px}
+  .stage-wrap{flex:1;position:relative;min-height:0;margin-bottom:40px}
+  .stage{position:absolute;left:50%;top:50%;width:2700px;height:720px;transform-origin:0 0}
+  .part{position:absolute;top:240px;height:240px;will-change:transform}
+  .part img{position:absolute;inset:0;width:100%;height:100%;display:block}
+  /* lens: a circle cut in the white shell shows the x-ray render underneath */
+  .part .op{
+    -webkit-mask-image:radial-gradient(circle var(--lr,0px) at var(--mx,-999px) var(--my,-999px),transparent calc(var(--lr,0px) - 22px),#000 var(--lr,0px));
+            mask-image:radial-gradient(circle var(--lr,0px) at var(--mx,-999px) var(--my,-999px),transparent calc(var(--lr,0px) - 22px),#000 var(--lr,0px))}
+  svg.leaders{position:absolute;inset:0;width:2700px;height:720px;overflow:visible;pointer-events:none}
+  svg.leaders line{stroke:var(--ink-2);stroke-width:2}
+  svg.leaders circle.dot{fill:#fff;stroke:var(--ink-2);stroke-width:2}
+  svg.leaders circle.dot.hot{fill:var(--mint);stroke:var(--mint-ink)}
+  .label{position:absolute;white-space:nowrap;font-size:30px;line-height:1.2;color:var(--ink);transform:translateX(-50%)}
+  .label small{display:block;font-size:24px;color:var(--muted)}
+
+  /* ================= block 2: horizontal teardown ================= */
+  .scene2{height:560vh;position:relative}
+  .sticky2{position:sticky;top:0;height:100vh;overflow:hidden}
+  .s2{position:absolute;left:50%;top:50%;width:1440px;height:900px;transform-origin:0 0}
+  .track{position:absolute;left:0;top:0;height:900px;will-change:transform}
+  .dpart{position:absolute;top:600px;height:240px;will-change:transform}
+  .dpart img{width:100%;height:100%;display:block}
+  svg.wires{position:absolute;left:0;top:0;width:4000px;height:900px;overflow:visible;pointer-events:none}
+  svg.wires path{fill:none;stroke:var(--ink-2);stroke-width:1.2}
+  svg.wires circle.c{fill:#fff;stroke:var(--ink-2);stroke-width:1.5}
+  svg.wires circle.ring{fill:none;stroke:var(--mint);stroke-width:1.5}
+  .tag{position:absolute;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);white-space:nowrap;transform:translateX(-50%)}
+
+  .intro{position:absolute;left:80px;top:150px;width:440px}
+  .intro .eb{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .intro h2{margin:0;font-weight:600;font-size:56px;letter-spacing:-.025em;line-height:1.02}
+  .intro p{margin:18px 0 0;font-size:18px;line-height:1.5;color:var(--ink-2)}
+  .intro .hint{margin-top:28px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+  .intro .hint i{width:36px;height:1px;background:var(--ink-2);position:relative}
+  .intro .hint i:after{content:"";position:absolute;right:0;top:-3px;width:7px;height:7px;border-top:1px solid var(--ink-2);border-right:1px solid var(--ink-2);transform:rotate(45deg)}
+
+  .gcard{position:absolute;top:64px;width:380px;height:476px;border-radius:24px;padding:30px 30px 28px;color:#EEF3F4;display:flex;flex-direction:column;will-change:opacity,transform;
+    background:
+      radial-gradient(120% 70% at 50% 118%, rgba(78,207,175,.22), rgba(78,207,175,0) 62%),
+      radial-gradient(90% 60% at 0% 0%, rgba(255,255,255,.06), rgba(255,255,255,0) 60%),
+      linear-gradient(180deg,#1B2427 0%,#0F1517 100%);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.07), inset 0 1px 0 rgba(255,255,255,.08), 0 40px 70px -40px rgba(15,21,23,.6)}
+  .gcard h4{margin:0;font-weight:500;font-size:28px;line-height:1.15;letter-spacing:-.02em}
+  .gcard h4 i{font-style:italic;font-weight:400;color:rgba(238,243,244,.82)}
+  .gcard .art{display:block;width:100%;height:auto;margin:auto 0;overflow:visible}
+  .gcard p{margin:0;font-size:15px;line-height:1.45;color:rgba(238,243,244,.66);max-width:260px}
+  .after{min-height:40vh;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:15px;padding:40px;text-align:center}
+  #cursor{position:fixed;left:0;top:0;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:rgba(61,84,89,.18);border:2px solid var(--ink-2);pointer-events:none;opacity:0;transition:opacity .3s;z-index:9}
+  @media (max-width:900px){ .hero p{white-space:normal} .hero h1 br{display:none} }
+</style>
+</head>
+<body>
+
+<!-- ================= block 1: hero ================= -->
+<div class="scene" id="scene">
+  <div class="sticky">
+    <section class="hero" id="hero">
+      <h1>Электрическая зубная щётка<br>с&nbsp;ИИ от&nbsp;DentAI</h1>
+      <p>Умный уход за&nbsp;зубами, который подстраивается именно под&nbsp;вас.</p>
+      <button class="cta" type="button">Перейти в&nbsp;магазин</button>
+    </section>
+    <div class="stage-wrap" id="wrap">
+      <div class="stage" id="stage">
+        <svg class="leaders" id="leaders" viewBox="0 0 2700 720"></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= block 2: technologies, horizontal ================= -->
+<div class="scene2" id="scene2">
+  <div class="sticky2">
+    <div class="s2" id="s2">
+      <div class="track" id="track">
+        <svg class="wires" id="wires" viewBox="0 0 4000 900"></svg>
+        <div class="intro">
+          <h2>Технологии</h2>
+          <p>Щётка с&nbsp;ИИ анализирует вашу технику чистки в&nbsp;реальном времени и&nbsp;подсказывает, где вы&nbsp;пропускаете участки.</p>
+        </div>
+        <div class="gcard" data-a="0">
+          <h4>3D-модель <i>полости рта</i></h4>
+          <svg class="art" viewBox="0 0 320 230" id="art1"></svg>
+          <p>Показывает зоны, где вы&nbsp;не&nbsp;дочистили.</p>
+        </div>
+        <div class="gcard" data-a="1">
+          <h4>ИИ-анализ <i>движений</i></h4>
+          <svg class="art" viewBox="0 0 320 230" id="art2"></svg>
+          <p>Распознаёт стиль чистки.</p>
+        </div>
+        <div class="gcard" data-a="2">
+          <h4>Подключение <i>к&nbsp;приложению</i></h4>
+          <svg class="art" viewBox="0 0 320 230" id="art3"></svg>
+          <p>История чисток, советы стоматологов.</p>
+        </div>
+        <div class="gcard" data-a="3">
+          <h4><i>Геймификация</i></h4>
+          <svg class="art" viewBox="0 0 320 230" id="art4"></svg>
+          <p>Баллы и&nbsp;награды за&nbsp;идеальную чистку.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="after">Конец прототипа · DentAI</div>
+<div id="cursor"></div>
+
+<script>
+const PARTS = [{"name": "head", "x0": 81, "x1": 300, "photo": "assets/parts/head-xray.webp", "op": "assets/parts/head-white.webp"}, {"name": "neck", "x0": 300, "x1": 795, "photo": "assets/parts/neck-xray.webp", "op": "assets/parts/neck-white.webp"}, {"name": "motor", "x0": 795, "x1": 1045, "photo": "assets/parts/motor-xray.webp", "op": "assets/parts/motor-white.webp"}, {"name": "pcb", "x0": 1045, "x1": 1452, "photo": "assets/parts/pcb-xray.webp", "op": "assets/parts/pcb-white.webp"}, {"name": "battery", "x0": 1452, "x1": 1994, "photo": "assets/parts/battery-xray.webp", "op": "assets/parts/battery-white.webp"}, {"name": "cap", "x0": 1994, "x1": 2092, "photo": "assets/parts/cap-xray.webp", "op": "assets/parts/cap-white.webp"}];
+const DW = {"L": 81, "top": 245, "parts": [{"name": "head", "x0": 81, "x1": 300, "src": "assets/xray/head.webp"}, {"name": "neck", "x0": 300, "x1": 795, "src": "assets/xray/neck.webp"}, {"name": "motor", "x0": 795, "x1": 1045, "src": "assets/xray/motor.webp"}, {"name": "pcb", "x0": 1045, "x1": 1452, "src": "assets/xray/pcb.webp"}, {"name": "battery", "x0": 1452, "x1": 1994, "src": "assets/xray/battery.webp"}, {"name": "cap", "x0": 1994, "x1": 2092, "src": "assets/xray/cap.webp"}]};
+const CALLOUTS = [
+  {part:'head',   x:190,  y:285, side:-1, t:'Сменная насадка', s:'мягкая щетина'},
+  {part:'motor',  x:930,  y:365, side: 1, t:'Звуковой мотор',  s:'колебания щетины'},
+  {part:'pcb',    x:1205, y:365, side:-1, t:'ИИ-чип',          s:'анализ движений', hot:true},
+  {part:'pcb',    x:1394, y:366, side: 1, t:'Датчик движения', s:'положение в полости рта'},
+  {part:'battery',x:1700, y:365, side:-1, t:'Аккумулятор',     s:'питание и зарядка'},
+  {part:'cap',    x:2025, y:372, side: 1, t:'Индикатор',       s:'статус и заряд'}
+];
+const Y0 = 245;
+const STAGE_W = 2700, STAGE_H = 720, PART_TOP = 240;
+const ASM_L = PARTS[0].x0, ASM_R = PARTS[PARTS.length-1].x1;
+const OFFSET = (STAGE_W - (ASM_R - ASM_L))/2 - ASM_L;
+const GAP = 110, N = PARTS.length;
+const clamp = (v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+const ease = t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+const lerp = (a,b,t)=>a+(b-a)*t;
+const NS='http://www.w3.org/2000/svg';
+const sv = (tag, attrs={}, parent)=>{ const el=document.createElementNS(NS,tag); for(const k in attrs) el.setAttribute(k,attrs[k]); if(parent) parent.append(el); return el; };
+
+/* ================= block 1 ================= */
+const stage = document.getElementById('stage'), leaders = document.getElementById('leaders');
+const els = {};
+PARTS.forEach(p=>{
+  const d = document.createElement('div');
+  d.className='part'; d.style.width=(p.x1-p.x0+3)+'px';
+  d.innerHTML = `<img class="ph" alt="" src="${p.photo}"><img class="op" alt="" src="${p.op}">`;
+  stage.insertBefore(d, leaders); els[p.name]=d;
+});
+const co = CALLOUTS.map(c=>{
+  const g = sv('g',{},leaders), ln = sv('line',{},g), dot = sv('circle',{r:7,class:'dot'+(c.hot?' hot':'')},g);
+  const lab = document.createElement('div'); lab.className='label';
+  lab.innerHTML = `${c.t}<small>${c.s}</small>`; stage.append(lab);
+  return {...c, g, ln, dot, lab, hv:0};
+});
+let e = 0, S = 1, lastT = performance.now();
+const LENS_R = 175;
+let cx=-9999, cy=-9999, lx=-9999, ly=-9999, lr=0, lensOn=false, partX={}, tourDriving=false;
+function toStage(x,y){ const r = stage.getBoundingClientRect(); return [(x - r.left)/S, (y - r.top)/S]; }
+function overBrush(x,y){ return e<.02 && x>=ASM_L+OFFSET-40 && x<=ASM_R+OFFSET+40 && y>=PART_TOP-30 && y<=PART_TOP+270; }
+addEventListener('pointermove', ev=>{
+  if (tourDriving) return;
+  if (ev.pointerType==='touch' && !ev.buttons) return;
+  [cx,cy] = toStage(ev.clientX, ev.clientY); lensOn = overBrush(cx,cy);
+}, {passive:true});
+document.documentElement.addEventListener('pointerleave', ()=>{ if(!tourDriving) lensOn=false; });
+const wrap = document.getElementById('wrap');
+
+/* ================= block 2: drawing of the brush, exploded along the X axis ================= */
+const track = document.getElementById('track'), wires = document.getElementById('wires'), s2 = document.getElementById('s2');
+const KD = 1.0, BASE_X = 680, GAP2 = 64, TOP2 = 600;          // sheet px -> stage px
+const dEls = DW.parts.map((p,i)=>{
+  const d = document.createElement('div'); d.className='dpart';
+  d.style.width = ((p.x1-p.x0+2)*KD)+'px';
+  d.innerHTML = `<img alt="" src="${p.src}">`;
+  track.insertBefore(d, wires); return d;
+});
+// part x in the track for explode amount ex
+const partLeft = (i, ex)=> BASE_X + (DW.parts[i].x0 - DW.L)*KD + i*GAP2*ex;
+const toY = sy => TOP2 + (sy - DW.top)*KD;
+// anchors on the drawing (sheet coordinates)
+const ANCH = [ {part:0, sx:190, sy:300}, {part:3, sx:1205, sy:365}, {part:5, sx:2025, sy:372} ];
+const anchorX = (a, ex)=> partLeft(a.part, ex) + (a.sx - DW.parts[a.part].x0)*KD;
+// small technical tags under each part
+
+const cardEls = [...document.querySelectorAll('.gcard')];
+const wireEls = ANCH.map(()=>({ p: sv('path',{},wires), r: sv('circle',{class:'ring',r:12},wires), c: sv('circle',{class:'c',r:4.5},wires), e: sv('circle',{class:'c',r:3.5},wires) }));
+const END_X = partLeft(5,1) + (DW.parts[5].x1-DW.parts[5].x0)*KD;
+const FINAL_X = END_X + 140, TRACK_W = FINAL_X + 380 + 100;
+// card visuals: hairlines on dark glass, one glowing element each
+const HL='rgba(238,243,244,.55)', HL2='rgba(238,243,244,.16)', GLOW='#A6F2DD', MINT='#4ECFAF';
+const ART = {};
+function defsOf(svg){ return svg.querySelector('defs') || sv('defs',{},svg); }
+function blur(svg,id,sd){ const f=sv('filter',{id,x:'-50%',y:'-50%',width:'200%',height:'200%'},defsOf(svg)); sv('feGaussianBlur',{stdDeviation:sd},f); }
+// outline of a group of overlapping circles: strokes hidden where they fall inside the group
+function lumpOutline(svg, id, circles, sw, fillId){
+  const m = sv('mask',{id, maskUnits:'userSpaceOnUse', x:-50, y:-50, width:500, height:400},defsOf(svg));
+  sv('rect',{x:-50,y:-50,width:500,height:400,fill:'#fff'},m);
+  circles.forEach(([x,y,r])=>sv('circle',{cx:x,cy:y,r:r-sw/2,fill:'#000'},m));
+  const g = sv('g',{},svg);
+  if (fillId) { const f = sv('g',{fill:`url(#${fillId})`},g); circles.forEach(([x,y,r])=>sv('circle',{cx:x,cy:y,r},f)); }
+  const st = sv('g',{mask:`url(#${id})`},g);
+  circles.forEach(([x,y,r])=>sv('circle',{cx:x,cy:y,r,fill:'none',stroke:HL,'stroke-width':sw},st));
+  return g;
+}
+(function(){ // 01 jaw, groups of teeth; three groups shaded
+  const g = document.getElementById('art1'), d = defsOf(g);
+  const rg = sv('radialGradient',{id:'zone',cx:'50%',cy:'60%',r:'60%'},d);
+  sv('stop',{offset:0,'stop-color':MINT,'stop-opacity':.55},rg); sv('stop',{offset:1,'stop-color':MINT,'stop-opacity':.05},rg);
+  const cx=160;
+  // teeth placed by hand to the reference proportions
+  const front = (y0, sgn)=>{ const o=[]; for(let i=0;i<6;i++){ const x=122+i*15.2, u=(x-160)/38; o.push([x, y0+sgn*9*u*u, 9.4]); } return o; };
+  const top = front(20, 1), bot = front(218, -1);
+  const UL=[[111,56,11.5],[104,76,12],[102,98,12]], UR=UL.map(([x,y,r])=>[2*cx-x,y,r]);
+  const LL=[[102,142,12],[104,164,12],[111,184,11.5]], LR=LL.map(([x,y,r])=>[2*cx-x,y,r]);
+  ART.zones=[];
+  [['j1',top],['j2',UL],['j3',UR],['j4',LL],['j5',LR],['j6',bot]].forEach(([id,c])=>lumpOutline(g,id,c,1,null));
+  // three teeth flagged by the model
+  [[UL[2],'z1'],[UR[1],'z2'],[bot[2],'z3']].forEach(([[x,y,r],id])=>{
+    ART.zones.push(sv('circle',{cx:x,cy:y,r:r-1,fill:'url(#zone)'},g));
+  });
+})();
+(function(){ // 02 concentric ellipses, inner one glowing; a point travels the orbit
+  const g = document.getElementById('art2'); blur(g,'b2',3.2);
+  const cx=160, cy=115;
+  [[96,92],[66,64]].forEach(([rx,ry])=>sv('ellipse',{cx,cy,rx,ry,fill:'none',stroke:HL2,'stroke-width':1},g));
+  sv('ellipse',{cx,cy,rx:122,ry:112,fill:'none',stroke:'rgba(238,243,244,.10)','stroke-width':1},g);
+  sv('line',{x1:20,x2:300,y1:cy,y2:cy,stroke:HL,'stroke-width':1,'stroke-dasharray':'1 3'},g);
+  sv('circle',{cx:20,cy,r:2.2,fill:'#EEF3F4'},g); sv('circle',{cx:300,cy,r:2.2,fill:'#EEF3F4'},g);
+  sv('ellipse',{cx,cy,rx:30,ry:38,fill:'none',stroke:GLOW,'stroke-width':4,opacity:.55,filter:'url(#b2)'},g);
+  sv('ellipse',{cx,cy,rx:30,ry:38,fill:'none',stroke:'#E9FFF8','stroke-width':1.6},g);
+  ART.orb = sv('circle',{r:2.6,fill:'#fff'},g); ART.orbG = sv('circle',{r:7,fill:GLOW,opacity:.6,filter:'url(#b2)'},g); ART.orbC=[cx,cy];
+})();
+(function(){ // 03 ring of fine radial ticks, filled part bright
+  const g = document.getElementById('art3');
+  const cx=160, cy=115, r0=58, r1=96, N=150; ART.ticks=[];
+  for (let i=0;i<N;i++){ const a=-Math.PI/2+i*2*Math.PI/N, c=Math.cos(a), s=Math.sin(a);
+    ART.ticks.push(sv('line',{x1:cx+c*r0,y1:cy+s*r0,x2:cx+c*r1,y2:cy+s*r1,stroke:'#EEF3F4','stroke-width':.8,'stroke-opacity':.12},g)); }
+  ART.tickN=N;
+  sv('circle',{cx,cy,r:3,fill:'#EEF3F4'},g);
+})();
+(function(){ // 04 ripples from the reward
+  const g = document.getElementById('art4'); blur(g,'b4',3);
+  const cx=160, cy=115; ART.rip=[]; ART.ripC=[cx,cy];
+  for (let i=0;i<4;i++) ART.rip.push(sv('circle',{cx,cy,r:30,fill:'none',stroke:'#EEF3F4','stroke-width':1}, g));
+  sv('circle',{cx,cy,r:34,fill:'none',stroke:GLOW,'stroke-width':4,opacity:.5,filter:'url(#b4)'},g);
+  sv('circle',{cx,cy,r:34,fill:'none',stroke:'#E9FFF8','stroke-width':1.4},g);
+  const t = sv('text',{x:cx,y:cy+8,'text-anchor':'middle','font-size':24,'font-weight':500,fill:'#EEF3F4','font-family':'Onest, system-ui','letter-spacing':'-.02em'},g); t.textContent='+20';
+})();
+function animateArt(now, vis){
+  ART.zones.forEach((z,i)=>z.setAttribute('opacity', .55+.45*(.5+.5*Math.sin(now/900+i*1.7))));
+  { const a = now/1400, [cx,cy]=ART.orbC, x=cx+30*Math.cos(a), y=cy+38*Math.sin(a);
+    ART.orb.setAttribute('cx',x); ART.orb.setAttribute('cy',y); ART.orbG.setAttribute('cx',x); ART.orbG.setAttribute('cy',y); }
+  { const k = ease(clamp(vis[2]*1.2)), lit = Math.round(ART.tickN*.86*k);
+    ART.ticks.forEach((l,i)=> l.setAttribute('stroke-opacity', i<lit ? (i>lit-6 ? .95 : .62) : .12)); }
+  { const [cx,cy]=ART.ripC; ART.rip.forEach((c,i)=>{ const ph=((now/3600)+i/4)%1; c.setAttribute('r', 36+ph*84); c.setAttribute('stroke-opacity', (1-ph)*.35); }); }
+}
+/* ================= layout ================= */
+let S2 = 1;
+function fit(){
+  const r = wrap.getBoundingClientRect();
+  S = Math.min(r.width*0.98/STAGE_W, r.height/STAGE_H);
+  stage.style.transform = `translate(${-STAGE_W*S/2}px,${-STAGE_H*S/2}px) scale(${S})`;
+  S2 = Math.min(innerWidth/1440, innerHeight/900);
+  s2.style.transform = `translate(${-720*S2}px,${-450*S2}px) scale(${S2})`;
+}
+addEventListener('resize',fit); fit();
+
+/* ================= render ================= */
+const scene = document.getElementById('scene'), scene2 = document.getElementById('scene2'), hero = document.getElementById('hero');
+function secP(el){ const r = el.getBoundingClientRect(); return clamp(-r.top / (el.offsetHeight - innerHeight)); }
+function block2(q, now){
+  const ex = ease(clamp(q/.12));                       // falls apart first
+  const tq0 = clamp((q-.1)/.9), tq = tq0 + Math.sin(tq0*Math.PI*2)*-.02;   // then the camera travels head -> cap, almost linear
+  const tx = -tq*(TRACK_W - 1440);
+  track.style.transform = `translateX(${tx}px)`;
+  dEls.forEach((d,i)=>{ d.style.transform = `translateX(${partLeft(i,ex)}px)`; });
+  // features: fade in while their anchor is in view
+  const seen = x=>{ const s = x + tx; return clamp((s-40)/220)*clamp((1400-s)/220); };
+  const VIS=[0,0,0,0];
+  ANCH.forEach((a,k)=>{
+    const ax = anchorX(a, ex), ay = toY(a.sy), o = seen(ax) * ex; VIS[k]=o;
+    const right = k===2;
+    const left = right ? ax + 50 - 380 : ax - 50;
+    const el = cardEls[k]; el.style.left = left+'px'; el.style.opacity = o; el.style.transform = `translateY(${(1-o)*16}px)`;
+    const w = wireEls[k], cxk = right ? left+380-50 : left+50;
+    w.p.setAttribute('d', `M${cxk} 540 V572 H${ax} V${ay}`);
+    w.p.style.opacity = o; w.r.style.opacity = o; w.c.style.opacity = o; w.e.style.opacity = o;
+    w.r.setAttribute('cx',ax); w.r.setAttribute('cy',ay); w.r.setAttribute('r', 12+4*Math.sin(now/400+k));
+    w.c.setAttribute('cx',ax); w.c.setAttribute('cy',ay); w.e.setAttribute('cx',cxk); w.e.setAttribute('cy',540);
+  });
+  const of = seen(FINAL_X+190); VIS[3]=of;
+  cardEls[3].style.left = FINAL_X+'px'; cardEls[3].style.opacity = of; cardEls[3].style.transform = `translateY(${(1-of)*16}px)`;
+  animateArt(now, VIS);
+}
+function render(now){
+  const dt = Math.min(64, now-lastT); lastT = now;
+  const p = secP(scene);
+  e = ease(clamp((p-.1)/.6));
+  if (lensOn && !overBrush(cx,cy)) lensOn = false;
+  if (lx<-9000){ lx=cx; ly=cy; }
+  lx += (cx-lx)*Math.min(1,dt/70); ly += (cy-ly)*Math.min(1,dt/70);
+  lr += ((lensOn?LENS_R:0)-lr)*Math.min(1,dt/110); if (lr<1) lr=0;
+  const shell = 1 - clamp(e/.35);                     // exploding: white shell -> x-ray parts
+  const xs = {};
+  PARTS.forEach((p,i)=>{
+    const x = p.x0+OFFSET+(i-(N-1)/2)*GAP*e; xs[p.name]=x;
+    const el = els[p.name], op = el.children[1];
+    el.style.transform = `translate(${x}px,0)`;
+    el.style.setProperty('--lr', lr+'px'); el.style.setProperty('--mx', (lx-x)+'px'); el.style.setProperty('--my', (ly-PART_TOP)+'px');
+    op.style.opacity = shell;
+  });
+  const vis = clamp((e-.55)/.3);
+  co.forEach(c=>{
+    const src = PARTS.find(p=>p.name===c.part);
+    const ax = xs[c.part] + (c.x - src.x0), ay = PART_TOP + (c.y - Y0);
+    const inLens = lr>40 && Math.hypot(ax-lx, ay-ly) < lr*.9 ? 1 : 0;
+    c.hv += (inLens - c.hv)*Math.min(1,dt/120);
+    const o = Math.max(vis, c.hv), ly2 = c.side<0 ? 120 : 600;
+    c.ln.setAttribute('x1',ax); c.ln.setAttribute('y1',ay); c.ln.setAttribute('x2',ax); c.ln.setAttribute('y2', c.side<0 ? ly2+70 : ly2-14);
+    c.dot.setAttribute('cx',ax); c.dot.setAttribute('cy',ay);
+    c.g.style.opacity = o; c.lab.style.left = ax+'px'; c.lab.style.top = ly2+'px'; c.lab.style.opacity = o;
+  });
+  hero.style.opacity = 1 - .94*clamp(p/.4);
+  hero.style.transform = `translateY(${-40*clamp(p/.4)}px)`;
+  block2(secP(scene2), now);
+  requestAnimationFrame(render);
+}
+
+/* ================= tour (open the page with #tour) ================= */
+const cursor = document.getElementById('cursor');
+let touring=false, tourId=0;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+function scrollToY(y1, ms, id){
+  return new Promise(res=>{ const y0 = scrollY, t0 = performance.now();
+    (function step(t){ if (id!==tourId) return res(); const k = clamp((t-t0)/ms); scrollTo(0, y0+(y1-y0)*(k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2)); k<1 ? requestAnimationFrame(step) : res(); })(t0); });
+}
+const yOf = (el, p)=> el.offsetTop + p*(el.offsetHeight-innerHeight);
+async function glideLens(id){
+  tourDriving = true; cursor.style.opacity=1;
+  const pts = [['motor',.3,.5],['motor',.75,.4],['pcb',.25,.5],['pcb',.6,.55],['pcb',.85,.45],['battery',.4,.5],['battery',.7,.55],['cap',.4,.5]];
+  const t0 = performance.now(), dur = 6200;
+  await new Promise(res=>{ (function step(t){
+    if (id!==tourId) return res();
+    const k = clamp((t-t0)/dur), u = k*(pts.length-1), i = Math.min(pts.length-2, Math.floor(u)), fr = u-i, a = pts[i], b = pts[i+1];
+    const ra = els[a[0]].getBoundingClientRect(), rb = els[b[0]].getBoundingClientRect(), s = fr*fr*(3-2*fr);
+    const x = lerp(ra.left+ra.width*a[1], rb.left+rb.width*b[1], s), y = lerp(ra.top+ra.height*a[2], rb.top+rb.height*b[2], s);
+    cursor.style.transform=`translate(${x}px,${y}px)`; [cx,cy] = toStage(x,y); lensOn = true;
+    k<1 ? requestAnimationFrame(step) : res(); })(t0); });
+  lensOn = false; tourDriving = false; cursor.style.opacity=0;
+}
+async function tour(){
+  const id = ++tourId; touring=true;
+  while (id===tourId){
+    await scrollToY(0, 900, id); await sleep(700); if (id!==tourId) break;
+    await glideLens(id); await sleep(500); if (id!==tourId) break;
+    await scrollToY(yOf(scene,1), 3000, id); await sleep(1500);
+    await scrollToY(yOf(scene2,0), 1400, id); await sleep(900);
+    await scrollToY(yOf(scene2,1), 16000, id); await sleep(2500);
+    await scrollToY(0, 2600, id); await sleep(1200);
+  }
+}
+function userTook(ev){ if (ev && ev.isTrusted===false) return; if (touring){ tourId++; touring=false; tourDriving=false; lensOn=false; cursor.style.opacity=0; } }
+['wheel','touchstart','keydown','pointerdown'].forEach(t=>addEventListener(t,userTook,{passive:true}));
+
+requestAnimationFrame(render);
+if (location.hash==='#tour') setTimeout(tour,600);
+</script>
+</body>
+</html>
